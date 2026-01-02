@@ -1,13 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { UsersService } from './users.service';
 import { User } from './entities/user.entity';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 
 describe('UsersService', () => {
   let service: UsersService;
-  let repository: jest.Mocked<Repository<User>>;
 
   const mockUser: Partial<User> = {
     id: '123e4567-e89b-12d3-a456-426614174000',
@@ -43,7 +41,6 @@ describe('UsersService', () => {
     }).compile();
 
     service = module.get<UsersService>(UsersService);
-    repository = module.get(getRepositoryToken(User));
   });
 
   afterEach(() => {
@@ -69,7 +66,7 @@ describe('UsersService', () => {
       expect(result).toEqual(mockUser);
       expect(mockRepository.create).toHaveBeenCalledWith({
         ...createUserDto,
-        birthday: expect.any(Date),
+        birthday: expect.any(Date) as Date,
         birthdayMonth: 5,
         birthdayDay: 15,
       });
@@ -133,7 +130,7 @@ describe('UsersService', () => {
       mockRepository.findOne.mockResolvedValue(mockUser as User);
       mockRepository.save.mockImplementation((user) => Promise.resolve(user));
 
-      const result = await service.update(mockUser.id!, updateDtoWithBirthday);
+      await service.update(mockUser.id!, updateDtoWithBirthday);
 
       expect(mockRepository.save).toHaveBeenCalled();
     });
