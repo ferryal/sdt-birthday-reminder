@@ -14,6 +14,7 @@ import {
 import { BirthdayService } from '../birthday/birthday.service';
 import { EmailService } from '../email/email.service';
 import { LockService } from '../redis/lock.service';
+import { MessageStatus } from '../birthday/entities/birthday-message.entity';
 
 const MAX_RETRY_ATTEMPTS = 5;
 const RETRY_DELAYS = [1000, 5000, 15000, 60000, 300000]; // Exponential backoff
@@ -69,7 +70,9 @@ export class BirthdayConsumerService implements OnModuleInit, OnModuleDestroy {
       this.logger.error(
         `Failed to connect to RabbitMQ: ${(error as Error).message}`,
       );
-      setTimeout(() => this.connect(), 5000);
+      void setTimeout(() => {
+        void this.connect();
+      }, 5000);
     }
   }
 
@@ -96,23 +99,24 @@ export class BirthdayConsumerService implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
-    this.channel.consume(BIRTHDAY_QUEUE, async (msg) => {
+    await this.channel.consume(BIRTHDAY_QUEUE, (msg) => {
       if (!msg) return;
 
-      const payload: BirthdayMessagePayload = JSON.parse(
+      const payload = JSON.parse(
         msg.content.toString(),
-      );
+      ) as BirthdayMessagePayload;
       this.logger.log(`Received birthday message: ${payload.messageId}`);
 
-      try {
-        await this.processMessage(payload);
-        this.channel!.ack(msg);
-      } catch (error) {
-        this.logger.error(
-          `Failed to process message ${payload.messageId}: ${(error as Error).message}`,
-        );
-        await this.handleFailure(msg, payload, error as Error);
-      }
+      this.processMessage(payload)
+        .then(() => {
+          this.channel!.ack(msg);
+        })
+        .catch((error: Error) => {
+          this.logger.error(
+            `Failed to process message ${payload.messageId}: ${error.message}`,
+          );
+          void this.handleFailure(msg, payload, error);
+        });
     });
 
     this.logger.log('Started consuming birthday messages');
@@ -141,7 +145,7 @@ export class BirthdayConsumerService implements OnModuleInit, OnModuleDestroy {
         return;
       }
 
-      if (message.status === 'sent') {
+      if (message.status === MessageStatus.SENT) {
         this.logger.debug(
           `Message ${payload.messageId} already sent, skipping`,
         );
