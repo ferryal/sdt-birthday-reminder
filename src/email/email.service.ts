@@ -42,7 +42,10 @@ export class EmailService {
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const statusCode = error.response?.status;
-        const errorMessage = error.response?.data?.message || error.message;
+        const responseData = error.response?.data as
+          | { message?: string }
+          | undefined;
+        const errorMessage = responseData?.message || error.message;
 
         // Log the error with details
         this.logger.error(
