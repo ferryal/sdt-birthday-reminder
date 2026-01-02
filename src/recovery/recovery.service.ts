@@ -4,7 +4,6 @@ import { BirthdayService } from '../birthday/birthday.service';
 import { BirthdayProducerService } from '../queue/birthday-producer.service';
 import { LockService } from '../redis/lock.service';
 
-const RECOVERY_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 const MAX_RETRY_ATTEMPTS = 5;
 
 @Injectable()
@@ -41,8 +40,11 @@ export class RecoveryService {
       await this.retryFailedMessages();
 
       this.logger.log('Recovery job completed');
-    } catch (error) {
-      this.logger.error(`Recovery job error: ${error.message}`, error.stack);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`Recovery job error: ${errorMessage}`, errorStack);
     } finally {
       await this.lockService.releaseLock(lockKey);
     }
@@ -83,9 +85,11 @@ export class RecoveryService {
 
         await this.birthdayService.markAsQueued(message.id);
         this.logger.log(`Recovered and queued message ${message.id}`);
-      } catch (error) {
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
         this.logger.error(
-          `Failed to recover message ${message.id}: ${error.message}`,
+          `Failed to recover message ${message.id}: ${errorMessage}`,
         );
       }
     }
@@ -128,9 +132,11 @@ export class RecoveryService {
 
         await this.birthdayService.markAsQueued(message.id);
         this.logger.log(`Retrying failed message ${message.id}`);
-      } catch (error) {
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
         this.logger.error(
-          `Failed to retry message ${message.id}: ${error.message}`,
+          `Failed to retry message ${message.id}: ${errorMessage}`,
         );
       }
     }
