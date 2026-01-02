@@ -60,7 +60,9 @@ export class BirthdayProducerService implements OnModuleInit, OnModuleDestroy {
         `Failed to connect to RabbitMQ: ${(error as Error).message}`,
       );
       // Retry connection after delay
-      setTimeout(() => this.connect(), 5000);
+      void setTimeout(() => {
+        void this.connect();
+      }, 5000);
     }
   }
 
@@ -90,10 +92,14 @@ export class BirthdayProducerService implements OnModuleInit, OnModuleDestroy {
 
     const message = Buffer.from(JSON.stringify(payload));
 
-    this.channel.sendToQueue(BIRTHDAY_QUEUE, message, {
+    const sent = this.channel.sendToQueue(BIRTHDAY_QUEUE, message, {
       persistent: true,
       messageId: payload.messageId,
     });
+
+    if (!sent) {
+      await new Promise((resolve) => this.channel!.once('drain', resolve));
+    }
 
     this.logger.log(`Published birthday message for user ${payload.userId}`);
   }
