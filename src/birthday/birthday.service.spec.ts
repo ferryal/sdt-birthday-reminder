@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { BirthdayService } from './birthday.service';
 import {
   BirthdayMessage,
@@ -10,7 +9,6 @@ import { User } from '../users/entities/user.entity';
 
 describe('BirthdayService', () => {
   let service: BirthdayService;
-  let repository: jest.Mocked<Repository<BirthdayMessage>>;
 
   const mockUser: Partial<User> = {
     id: '123e4567-e89b-12d3-a456-426614174000',
@@ -53,7 +51,6 @@ describe('BirthdayService', () => {
     }).compile();
 
     service = module.get<BirthdayService>(BirthdayService);
-    repository = module.get(getRepositoryToken(BirthdayMessage));
   });
 
   afterEach(() => {
@@ -122,7 +119,7 @@ describe('BirthdayService', () => {
 
       expect(mockRepository.update).toHaveBeenCalledWith('message-123', {
         status: MessageStatus.SENT,
-        sentAt: expect.any(Date),
+        sentAt: expect.any(Date) as Date,
       });
     });
   });

@@ -1,12 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository } from 'typeorm';
 import {
   BirthdayMessage,
   MessageStatus,
 } from './entities/birthday-message.entity';
 import { User } from '../users/entities/user.entity';
-import * as moment from 'moment-timezone';
+
+interface DatabaseError extends Error {
+  code?: string;
+}
 
 @Injectable()
 export class BirthdayService {
@@ -52,9 +55,10 @@ export class BirthdayService {
         `Created birthday message ${saved.id} for user ${user.id}`,
       );
       return saved;
-    } catch (error) {
+    } catch (error: unknown) {
       // Handle unique constraint violation (race condition protection)
-      if (error.code === '23505') {
+      const dbError = error as DatabaseError;
+      if (dbError.code === '23505') {
         this.logger.debug(
           `Duplicate message prevented for user ${user.id} in year ${year}`,
         );

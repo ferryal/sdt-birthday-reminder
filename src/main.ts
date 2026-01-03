@@ -39,4 +39,7 @@ async function bootstrap() {
   logger.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 }
 
-bootstrap();
+bootstrap().catch((error) => {
+  console.error('Bootstrap error:', error);
+  process.exit(1);
+});

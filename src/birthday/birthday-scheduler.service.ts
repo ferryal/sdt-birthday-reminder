@@ -5,6 +5,7 @@ import { UsersService } from '../users/users.service';
 import { BirthdayService } from './birthday.service';
 import { BirthdayProducerService } from '../queue/birthday-producer.service';
 import { LockService } from '../redis/lock.service';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class BirthdaySchedulerService {
@@ -74,10 +75,13 @@ export class BirthdaySchedulerService {
       for (const timezone of timezonesAt9AM) {
         await this.processBirthdaysForTimezone(timezone);
       }
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
       this.logger.error(
-        `Error in birthday scheduler: ${error.message}`,
-        error.stack,
+        `Error in birthday scheduler: ${errorMessage}`,
+        errorStack,
       );
     } finally {
       await this.lockService.releaseLock(lockKey);
@@ -111,9 +115,11 @@ export class BirthdaySchedulerService {
       for (const user of users) {
         await this.createAndQueueBirthdayMessage(user, timezone);
       }
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(
-        `Error processing birthdays for ${timezone}: ${error.message}`,
+        `Error processing birthdays for ${timezone}: ${errorMessage}`,
       );
     }
   }
@@ -122,7 +128,7 @@ export class BirthdaySchedulerService {
    * Create a birthday message and queue it for sending
    */
   private async createAndQueueBirthdayMessage(
-    user: any,
+    user: User,
     timezone: string,
   ): Promise<void> {
     // Acquire a lock for this specific user to prevent duplicate processing
