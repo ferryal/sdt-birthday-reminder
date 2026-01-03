@@ -9,6 +9,7 @@ import { QueueModule } from './queue/queue.module';
 import { EmailModule } from './email/email.module';
 import { RecoveryModule } from './recovery/recovery.module';
 import { RedisModule } from './redis/redis.module';
+import { HealthModule } from './health/health.module';
 import { User } from './users/entities/user.entity';
 import { BirthdayMessage } from './birthday/entities/birthday-message.entity';
 
@@ -42,6 +43,7 @@ import { BirthdayMessage } from './birthday/entities/birthday-message.entity';
 
     // Application modules
     RedisModule,
+    HealthModule,
     UsersModule,
     EmailModule,
     BirthdayModule,
