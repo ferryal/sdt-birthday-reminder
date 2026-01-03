@@ -4,10 +4,10 @@ import {
   IsEmail,
   IsDateString,
   MaxLength,
-  Matches,
   IsOptional,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsIANATimezone } from '../../common/validators/timezone.validator';
 
 export class CreateUserDto {
   @ApiProperty({ example: 'John', description: 'First name of the user' })
@@ -46,10 +46,7 @@ export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
-  @Matches(/^[A-Za-z_]+\/[A-Za-z_]+$/, {
-    message:
-      'timezone must be a valid IANA timezone format (e.g., America/New_York)',
-  })
+  @IsIANATimezone()
   timezone: string; // IANA timezone, e.g., 'America/New_York'
 }
 
@@ -93,9 +90,6 @@ export class UpdateUserDto {
   @IsString()
   @IsOptional()
   @MaxLength(100)
-  @Matches(/^[A-Za-z_]+\/[A-Za-z_]+$/, {
-    message:
-      'timezone must be a valid IANA timezone format (e.g., America/New_York)',
-  })
+  @IsIANATimezone()
   timezone?: string;
 }
