@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
+import { MessageType, getMessageContent } from '../messages/message-type.enum';
 
 @Injectable()
 export class EmailService {
@@ -24,9 +25,28 @@ export class EmailService {
    * API docs: https://email-service.digitalenvision.com.au/api-docs/
    */
   async sendBirthdayEmail(email: string, fullName: string): Promise<void> {
-    const message = `Hey, ${fullName} it's your birthday`;
+    return this.sendMessage(email, fullName, MessageType.BIRTHDAY);
+  }
 
-    this.logger.log(`Sending birthday email to ${email}`);
+  /**
+   * Send an anniversary email via the external email service
+   * This method is ready for future anniversary feature implementation
+   */
+  async sendAnniversaryEmail(email: string, fullName: string): Promise<void> {
+    return this.sendMessage(email, fullName, MessageType.ANNIVERSARY);
+  }
+
+  /**
+   * Generic method to send any message type
+   */
+  async sendMessage(
+    email: string,
+    fullName: string,
+    messageType: MessageType,
+  ): Promise<void> {
+    const message = getMessageContent(messageType, fullName);
+
+    this.logger.log(`Sending ${messageType} email to ${email}`);
 
     try {
       const response = await this.httpClient.post('', {
@@ -35,7 +55,7 @@ export class EmailService {
       });
 
       if (response.status >= 200 && response.status < 300) {
-        this.logger.log(`Successfully sent birthday email to ${email}`);
+        this.logger.log(`Successfully sent ${messageType} email to ${email}`);
       } else {
         throw new Error(`Unexpected status code: ${response.status}`);
       }

@@ -10,6 +10,7 @@ import {
   Unique,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
+import { MessageType } from '../../messages/message-type.enum';
 
 export enum MessageStatus {
   PENDING = 'pending',
@@ -17,6 +18,8 @@ export enum MessageStatus {
   SENT = 'sent',
   FAILED = 'failed',
 }
+
+export { MessageType };
 
 @Entity('birthday_messages')
 @Unique(['userId', 'year']) // Prevent duplicate messages for same user/year
@@ -41,6 +44,14 @@ export class BirthdayMessage {
     default: MessageStatus.PENDING,
   })
   status: MessageStatus;
+
+  @Column({
+    name: 'message_type',
+    type: 'enum',
+    enum: MessageType,
+    default: MessageType.BIRTHDAY,
+  })
+  messageType: MessageType;
 
   @Column({ name: 'scheduled_for', type: 'timestamp with time zone' })
   scheduledFor: Date; // When the message should be sent (9 AM in user's timezone)
